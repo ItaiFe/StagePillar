@@ -4,6 +4,7 @@
 #include "gesture.h"
 #include "net.h"
 #include "ota.h"
+#include "pillar_leds.h"
 #include "sender.h"
 #include "status_led.h"
 
@@ -14,6 +15,7 @@ void setup() {
     Serial.printf("\nStagePillar button %s\n", FIRMWARE_VERSION);
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     statusLedBegin();
+    pillarLedsBegin();
     netBegin();
     senderBegin();
 }
@@ -25,10 +27,12 @@ void loop() {
     Gesture gesture = detector.update(digitalRead(BUTTON_PIN) == BUTTON_PRESSED_LEVEL, now);
     if (gesture != Gesture::None) {
         Serial.printf("Gesture -> %s\n", actionFor(gesture));
+        pillarLedsPlay(gesture, now);
         if (!senderEnqueue(gesture)) Serial.println("Drop: queue full");
     }
 
     otaLoop(wifi);
     statusLedUpdate(now, wifi);
+    pillarLedsUpdate(now, otaActive());
     delay(1);
 }

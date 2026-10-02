@@ -10,9 +10,11 @@
 #define FIRMWARE_VERSION "dev"
 #endif
 
-constexpr uint8_t BUTTON_PIN = 12;  // internal pull-up; GPIO 4 drives the LED strip
+constexpr uint8_t BUTTON_PIN = 12;  // internal pull-up
 constexpr uint8_t BUTTON_PRESSED_LEVEL = 1;  // this board reads HIGH while the button is down
 constexpr uint8_t LED_PIN = 2;      // onboard LED, active high
+constexpr uint8_t PILLAR_LED_PIN = 4;     // 100 x WS2812B, GRB
+constexpr uint8_t PILLAR_BRIGHTNESS = 80; // of 255; caps strip current
 constexpr const char* DEVICE_HOSTNAME = "stage-pillar";
 constexpr uint16_t HTTP_TIMEOUT_MS = 2000;
 constexpr uint32_t MDNS_TIMEOUT_MS = 1500;

@@ -19,6 +19,21 @@ A gesture fires 0.4 s after the last release; a long press fires while held.
 Button on **GPIO 12** (internal pull-up), reads HIGH while pressed. Status on the onboard LED (GPIO 2):
 one blink = sent, three fast blinks = failed, slow blink = no WiFi.
 
+## Pillar LEDs
+
+100 × WS2812B on **GPIO 4** (GRB), brightness capped at 80/255. Idle: a slow rainbow flowing up.
+Each gesture plays a short effect the moment it is recognised, then idle resumes:
+
+| Action    | Effect                                        |
+|-----------|-----------------------------------------------|
+| `start`   | Warm white fills bottom to top, then fades    |
+| `claps`   | White sparkles                                |
+| `special` | Whole pillar pulses blue → purple → magenta   |
+| `skip`    | Cyan band runs up                             |
+| `stop`    | Fades to a dim red glow                       |
+
+Two quick red flashes mean the press did not reach the server. The strip is dark during OTA.
+
 ## Setup
 
 ```bash

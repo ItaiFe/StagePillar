@@ -5,6 +5,7 @@
 #include "config.h"
 #include "net.h"
 #include "ota.h"
+#include "pillar_leds.h"
 #include "send_policy.h"
 #include "status_led.h"
 
@@ -25,6 +26,7 @@ static void send(Gesture gesture) {
     if (!netConnected()) {
         Serial.printf("Drop %s: WiFi down\n", action);
         statusLedFlash(Flash::Fail);
+        pillarLedsFail();
         return;
     }
 
@@ -49,9 +51,11 @@ static void send(Gesture gesture) {
             break;
         case SendResult::Failed:
             statusLedFlash(Flash::Fail);
+            pillarLedsFail();
             break;
         case SendResult::Unreachable:
             statusLedFlash(Flash::Fail);
+            pillarLedsFail();
             netForgetServerIp();  // the Pi may have a new address
             break;
     }
