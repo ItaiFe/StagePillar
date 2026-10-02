@@ -364,7 +364,8 @@ Gesture GestureDetector::update(bool pressed, uint32_t nowMs) {
         }
     }
 
-    if (stable_ && !longFired_ && nowMs - stableSince_ >= timing_.longMs) {
+    // raw_ must also be down: a release still in its debounce window ends the hold short of Long.
+    if (stable_ && raw_ && !longFired_ && nowMs - stableSince_ >= timing_.longMs) {
         longFired_ = true;
         count_ = 0;
         return Gesture::Long;
