@@ -5,7 +5,13 @@
 #include "config.h"
 #include "net.h"
 #include "ota.h"
+#include "send_policy.h"
 #include "status_led.h"
+
+struct QueuedGesture {
+    Gesture gesture;
+    uint32_t queuedAtMs;
+};
 
 static QueueHandle_t queue;
 
@@ -36,28 +42,39 @@ static void send(Gesture gesture) {
     }
     Serial.printf("POST %s -> %d (%lu ms)\n", action, code, (unsigned long)(millis() - start));
 
-    if (code >= 200 && code < 300) {
-        statusLedFlash(Flash::Ok);
-        return;
-    }
-    statusLedFlash(Flash::Fail);
     // No retry: a repeated start or claps on stage is worse than a miss.
-    // A negative code means no connection; the Pi may have a new address.
-    if (code < 0) netForgetServerIp();
+    switch (classifySend(code)) {
+        case SendResult::Ok:
+            statusLedFlash(Flash::Ok);
+            break;
+        case SendResult::Failed:
+            statusLedFlash(Flash::Fail);
+            break;
+        case SendResult::Unreachable:
+            statusLedFlash(Flash::Fail);
+            netForgetServerIp();  // the Pi may have a new address
+            break;
+    }
 }
 
 static void senderTask(void*) {
-    Gesture gesture;
+    QueuedGesture item;
     for (;;) {
-        if (xQueueReceive(queue, &gesture, portMAX_DELAY) == pdTRUE) send(gesture);
+        if (xQueueReceive(queue, &item, portMAX_DELAY) != pdTRUE) continue;
+        if (gestureStale(item.queuedAtMs, millis())) {
+            Serial.printf("Drop %s: waited too long in queue\n", actionFor(item.gesture));
+            continue;
+        }
+        send(item.gesture);
     }
 }
 
 void senderBegin() {
-    queue = xQueueCreate(GESTURE_QUEUE_LEN, sizeof(Gesture));
+    queue = xQueueCreate(GESTURE_QUEUE_LEN, sizeof(QueuedGesture));
     xTaskCreate(senderTask, "sender", 8192, nullptr, 1, nullptr);
 }
 
 bool senderEnqueue(Gesture gesture) {
-    return xQueueSend(queue, &gesture, 0) == pdTRUE;
+    QueuedGesture item{gesture, millis()};
+    return xQueueSend(queue, &item, 0) == pdTRUE;
 }

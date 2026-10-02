@@ -82,6 +82,11 @@ loop() ──► GestureDetector.update(level, now) ──► gesture? ──►
 - **WiFi down**: gestures are dropped and logged, not queued, so stale presses
   never fire later. WiFi reconnects in the background.
 - **Queue full** (4): the new gesture is dropped and logged.
+- **Stale gesture**: a gesture that waited more than 1 s in the queue (behind a
+  slow POST) is dropped, so a backlog never fires late.
+- **Reply timeout**: the server runs the whole device sequence before replying,
+  so a request that was sent but got no reply within 2 s counts as sent (single
+  blink, address kept). Only failures to connect or send, and non-2xx replies, blink as failed.
 - **During OTA**: gestures are ignored.
 
 ## Status LED (GPIO 2)
