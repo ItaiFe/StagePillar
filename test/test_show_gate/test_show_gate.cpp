@@ -8,8 +8,12 @@ void test_start_is_allowed_when_idle() {
     TEST_ASSERT_TRUE(gestureAllowed(Gesture::Single, false));
 }
 
+void test_stop_is_allowed_when_idle() {
+    TEST_ASSERT_TRUE(gestureAllowed(Gesture::Long, false));
+}
+
 void test_everything_else_is_ignored_when_idle() {
-    const Gesture blocked[] = {Gesture::Double, Gesture::Triple, Gesture::Quad, Gesture::Many, Gesture::Long};
+    const Gesture blocked[] = {Gesture::Double, Gesture::Triple, Gesture::Quad, Gesture::Many};
     for (Gesture g : blocked) TEST_ASSERT_FALSE(gestureAllowed(g, false));
 }
 
@@ -48,6 +52,7 @@ void test_garbage_is_not_running() {
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_start_is_allowed_when_idle);
+    RUN_TEST(test_stop_is_allowed_when_idle);
     RUN_TEST(test_everything_else_is_ignored_when_idle);
     RUN_TEST(test_everything_is_allowed_while_playing);
     RUN_TEST(test_song_loaded_is_running);

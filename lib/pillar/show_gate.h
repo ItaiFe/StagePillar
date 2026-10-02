@@ -2,9 +2,9 @@
 #include <string.h>
 #include "gesture.h"
 
-// While the show is idle only a single press (start) does anything.
-inline bool gestureAllowed(Gesture gesture, bool showPlaying) {
-    return showPlaying || gesture == Gesture::Single;
+// While the show is idle only start (single press) and stop (long press) do anything.
+inline bool gestureAllowed(Gesture gesture, bool showRunning) {
+    return showRunning || gesture == Gesture::Single || gesture == Gesture::Long;
 }
 
 // Reads GET /api/player/state: the show runs while a song is loaded (playing or

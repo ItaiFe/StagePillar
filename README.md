@@ -14,8 +14,8 @@ ESP32 firmware for the stage button. Press gestures send actions to StageControl
 
 A gesture fires 0.4 s after the last release; a long press fires while held.
 
-While no song is loaded (stopped, or the Pi unreachable; paused counts as running) only a single press (`start`) does
-anything; other gestures are ignored, with no request and no LED effect. The button polls
+While no song is loaded (stopped, or the Pi unreachable; paused counts as running) only `start` (single press) and `stop`
+(long press) do anything; other gestures are ignored, with no request and no LED effect. The button polls
 `GET /api/player/state` every second.
 
 ## Wiring

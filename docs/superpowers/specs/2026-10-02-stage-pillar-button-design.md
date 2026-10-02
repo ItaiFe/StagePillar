@@ -28,8 +28,8 @@ The server already implements this endpoint; no server changes are needed.
 ## Idle gate (added 2026-10-02)
 
 The button polls `GET /api/player/state` every 1 s in a background task. While
-no song is loaded (`current_song` is null, unknown, or Pi unreachable; paused counts as running), only a single
-press (`start`) is acted on; every other gesture is ignored: no POST and no LED
+no song is loaded (`current_song` is null, unknown, or Pi unreachable; paused counts as running), only `start`
+(single press) and `stop` (long press) are acted on; every other gesture is ignored: no POST and no LED
 effect. After a `start` the show is treated as playing for 3 s so a quick
 follow-up gesture is not blocked while the next poll catches up.
 
