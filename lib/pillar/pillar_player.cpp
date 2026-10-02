@@ -1,31 +1,29 @@
 #include "pillar_player.h"
 
-// Idle lasts exactly 256 LEDs of rainbow shift so the pattern is seamless when it loops.
-static const EffectStep kIdleSteps[] = {
-    {EffectId::Rainbow, 256 * 80, 255, Direction::Up, 16, {}},
-};
-static const EffectStep kStartSteps[] = {
-    {EffectId::Comet, 2100, 255, Direction::Bounce, 24, {{255, 0, 192}, {0, 229, 255}, {255, 176, 0}}},
-};
-static const EffectStep kClapsSteps[] = {
-    {EffectId::Sparkle, 1200, 255, Direction::Up, 16, {{255, 255, 255}}},
-};
-static const EffectStep kSpecialSteps[] = {
-    {EffectId::Pulse, 1500, 255, Direction::Up, 16, {{0, 0, 255}, {128, 0, 255}, {255, 0, 192}}},
-};
-static const EffectStep kSkipSteps[] = {
-    {EffectId::Band, 500, 255, Direction::Up, 16, {{0, 255, 255}}},
-};
-static const EffectStep kStopSteps[] = {
-    {EffectId::Fade, 1500, 255, Direction::Up, 16, {{255, 0, 0}, {40, 0, 0}}},
+const Slot kSlots[kStoredSlots] = {Slot::Idle, Slot::Start, Slot::Claps, Slot::Special, Slot::Skip, Slot::Stop};
+
+struct DefaultSlot {
+    bool loop;
+    EffectStep step;
 };
 
-static const Sequence kIdle{true, 1, kIdleSteps};
-static const Sequence kStart{true, 1, kStartSteps};
-static const Sequence kClaps{false, 1, kClapsSteps};
-static const Sequence kSpecial{false, 1, kSpecialSteps};
-static const Sequence kSkip{false, 1, kSkipSteps};
-static const Sequence kStop{false, 1, kStopSteps};
+// Index order matches kSlots. Idle lasts exactly 256 LEDs of rainbow shift so the
+// pattern is seamless when it loops.
+static const DefaultSlot kDefaults[kStoredSlots] = {
+    {true, {EffectId::Rainbow, 256 * 80, 255, Direction::Up, 16, {}}},
+    {true, {EffectId::Comet, 2100, 255, Direction::Bounce, 24, {{255, 0, 192}, {0, 229, 255}, {255, 176, 0}}}},
+    {false, {EffectId::Sparkle, 1200, 255, Direction::Up, 16, {{255, 255, 255}}}},
+    {false, {EffectId::Pulse, 1500, 255, Direction::Up, 16, {{0, 0, 255}, {128, 0, 255}, {255, 0, 192}}}},
+    {false, {EffectId::Band, 500, 255, Direction::Up, 16, {{0, 255, 255}}}},
+    {false, {EffectId::Fade, 1500, 255, Direction::Up, 16, {{255, 0, 0}, {40, 0, 0}}}},
+};
+
+static int slotIndex(Slot slot) {
+    for (int i = 0; i < kStoredSlots; i++) {
+        if (kSlots[i] == slot) return i;
+    }
+    return 0;
+}
 
 Slot slotFor(Gesture gesture) {
     switch (gesture) {
@@ -39,49 +37,51 @@ Slot slotFor(Gesture gesture) {
     }
 }
 
-const Sequence& defaultSequence(Slot slot) {
+const char* slotName(Slot slot) {
     switch (slot) {
-        case Slot::Start:   return kStart;
-        case Slot::Claps:   return kClaps;
-        case Slot::Special: return kSpecial;
-        case Slot::Skip:    return kSkip;
-        case Slot::Stop:    return kStop;
-        default:            return kIdle;
+        case Slot::Idle:    return "idle";
+        case Slot::Start:   return "start";
+        case Slot::Claps:   return "claps";
+        case Slot::Special: return "special";
+        case Slot::Skip:    return "skip";
+        case Slot::Stop:    return "stop";
+        case Slot::Preview: return "preview";
+        default:            return "none";
     }
 }
 
-bool renderSequence(const Sequence& seq, uint32_t msSinceStart, uint32_t seed, Rgb* frame, uint16_t count) {
-    uint32_t total = 0;
-    for (uint8_t i = 0; i < seq.stepCount; i++) total += seq.steps[i].durationMs;
-    if (total == 0) return false;
-
-    uint32_t t = msSinceStart;
-    if (seq.loop) {
-        t %= total;
-    } else if (t >= total) {
-        return false;
-    }
-
-    for (uint8_t i = 0; i < seq.stepCount; i++) {
-        const EffectStep& step = seq.steps[i];
-        if (t < step.durationMs) {
-            renderStep(step, t, seed, frame, count);
-            return true;
+// Defaults are encoded as real PLP1 files so they go through the same reader as uploads.
+Plan defaultPlan(Slot slot) {
+    static const uint32_t kLen = kPlanHeaderBytes + kEffectStepBytes;
+    static uint8_t bufs[kStoredSlots][kLen];
+    static const MemorySource sources[kStoredSlots] = {
+        MemorySource(bufs[0], kLen), MemorySource(bufs[1], kLen), MemorySource(bufs[2], kLen),
+        MemorySource(bufs[3], kLen), MemorySource(bufs[4], kLen), MemorySource(bufs[5], kLen),
+    };
+    static PlanIndex indexes[kStoredSlots];
+    static bool built = false;
+    if (!built) {
+        for (int i = 0; i < kStoredSlots; i++) {
+            encodeEffectPlan(0, kDefaults[i].loop, &kDefaults[i].step, 1, bufs[i], kLen);
+            planIndex(sources[i], indexes[i]);
         }
-        t -= step.durationMs;
+        built = true;
     }
-    return false;
+    int i = slotIndex(slot);
+    return Plan{&sources[i], &indexes[i]};
 }
 
-PillarPlayer::PillarPlayer(Lookup lookup) : lookup_(lookup) {}
+PillarPlayer::PillarPlayer(Lookup lookup) : lookup_(lookup) {
+    play(Slot::Idle, 0);
+}
 
 void PillarPlayer::play(Slot slot, uint32_t nowMs) {
     active_ = slot;
-    activeStartMs_ = nowMs;
+    renderer_.start(slot == Slot::Preview ? preview_ : lookup_(slot), nowMs, nowMs);
 }
 
 void PillarPlayer::trigger(Slot slot, uint32_t nowMs) {
-    if (slot == Slot::None) return;
+    if (slot == Slot::None || slot == Slot::Preview) return;
     if (slot == Slot::Start) running_ = true;
     if (slot == Slot::Stop) running_ = false;
     play(slot, nowMs);
@@ -90,6 +90,7 @@ void PillarPlayer::trigger(Slot slot, uint32_t nowMs) {
 void PillarPlayer::setShowRunning(bool running, uint32_t nowMs) {
     if (running == running_) return;
     running_ = running;
+    if (active_ == Slot::Preview) return;  // the preview keeps playing; base applies after it
     if (running) {
         // A gesture in progress finishes first and then falls back to the play loop.
         if (active_ == Slot::Idle) play(Slot::Start, nowMs);
@@ -98,8 +99,21 @@ void PillarPlayer::setShowRunning(bool running, uint32_t nowMs) {
     }
 }
 
+void PillarPlayer::playPreview(Plan plan, uint32_t nowMs) {
+    preview_ = plan;
+    play(Slot::Preview, nowMs);
+}
+
+void PillarPlayer::endPreview(uint32_t nowMs) {
+    if (active_ == Slot::Preview) play(base(), nowMs);
+}
+
+void PillarPlayer::reload(uint32_t nowMs) {
+    if (active_ != Slot::Preview) play(active_, nowMs);
+}
+
 void PillarPlayer::render(uint32_t nowMs, Rgb* frame, uint16_t count) {
-    if (renderSequence(lookup_(active_), nowMs - activeStartMs_, activeStartMs_, frame, count)) return;
-    play(running_ ? Slot::Start : Slot::Idle, nowMs);
-    renderSequence(lookup_(active_), 0, activeStartMs_, frame, count);
+    if (renderer_.render(nowMs, frame, count)) return;
+    play(base(), nowMs);
+    renderer_.render(nowMs, frame, count);
 }
