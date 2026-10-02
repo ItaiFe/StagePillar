@@ -41,6 +41,6 @@ void loop() {
 
     otaLoop(wifi);
     statusLedUpdate(now, wifi);
-    pillarLedsUpdate(now, otaActive());
+    pillarLedsUpdate(now, otaActive(), showPlaying(now));
     delay(1);
 }

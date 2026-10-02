@@ -1,18 +1,17 @@
 #include "pillar_leds.h"
 #include <FastLED.h>
 #include "config.h"
-#include "led_effects.h"
+#include "pillar_player.h"
 
+static const uint16_t kLeds = 100;
 static const uint32_t kFrameMs = 20;
 
-static CRGB leds[kPillarLeds];
-static Rgb frame[kPillarLeds];
+static CRGB leds[kLeds];
+static Rgb frame[kLeds];
 static uint32_t lastFrameMs = 0;
 
 // Touched only from loop().
-static Effect effect = Effect::None;
-static uint32_t effectStartMs = 0;
-static uint32_t effectSeed = 0;
+static PillarPlayer player;
 static bool failActive = false;
 static uint32_t failStartMs = 0;
 
@@ -21,17 +20,13 @@ static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 static bool failPending = false;
 
 void pillarLedsBegin() {
-    FastLED.addLeds<WS2812B, PILLAR_LED_PIN, GRB>(leds, kPillarLeds);
+    FastLED.addLeds<WS2812B, PILLAR_LED_PIN, GRB>(leds, kLeds);
     FastLED.setBrightness(PILLAR_BRIGHTNESS);
     FastLED.clear(true);
 }
 
 void pillarLedsPlay(Gesture gesture, uint32_t nowMs) {
-    Effect next = effectFor(gesture);
-    if (next == Effect::None) return;
-    effect = next;
-    effectStartMs = nowMs;
-    effectSeed = esp_random();
+    player.trigger(slotFor(gesture), nowMs);
 }
 
 void pillarLedsFail() {
@@ -40,7 +35,7 @@ void pillarLedsFail() {
     portEXIT_CRITICAL(&mux);
 }
 
-void pillarLedsUpdate(uint32_t nowMs, bool otaActive) {
+void pillarLedsUpdate(uint32_t nowMs, bool otaActive, bool showRunning) {
     if (nowMs - lastFrameMs < kFrameMs) return;
     lastFrameMs = nowMs;
 
@@ -58,12 +53,10 @@ void pillarLedsUpdate(uint32_t nowMs, bool otaActive) {
         failStartMs = nowMs;
     }
 
-    if (!renderEffect(effect, nowMs - effectStartMs, effectSeed, frame, kPillarLeds)) {
-        effect = Effect::None;
-        renderIdle(nowMs, frame, kPillarLeds);
-    }
-    if (failActive && !overlayFail(nowMs - failStartMs, frame, kPillarLeds)) failActive = false;
+    player.setShowRunning(showRunning, nowMs);
+    player.render(nowMs, frame, kLeds);
+    if (failActive && !overlayFail(nowMs - failStartMs, frame, kLeds)) failActive = false;
 
-    for (uint16_t i = 0; i < kPillarLeds; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
+    for (uint16_t i = 0; i < kLeds; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
     FastLED.show();
 }

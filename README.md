@@ -25,18 +25,21 @@ one blink = sent, three fast blinks = failed, slow blink = no WiFi.
 
 ## Pillar LEDs
 
-100 × WS2812B on **GPIO 4** (GRB), brightness capped at 80/255. Idle: a slow rainbow flowing up.
-Each gesture plays a short effect the moment it is recognised, then idle resumes:
+100 × WS2812B on **GPIO 4** (GRB), brightness capped at 80/255. Built-in effects live in
+`lib/pillar/led_catalogue.cpp`; default sequences per slot in `lib/pillar/pillar_player.cpp`.
 
-| Action    | Effect                                        |
-|-----------|-----------------------------------------------|
-| `start`   | Warm white fills bottom to top, then fades    |
-| `claps`   | White sparkles                                |
-| `special` | Whole pillar pulses blue → purple → magenta   |
-| `skip`    | Cyan band runs up                             |
-| `stop`    | Fades to a dim red glow                       |
+| Slot      | Default                                                              |
+|-----------|----------------------------------------------------------------------|
+| idle      | Slow rainbow flowing up (loops while no show is running)             |
+| start     | Bouncing comet, magenta → cyan → gold, one colour per pass (loops for the whole song) |
+| `claps`   | White sparkles                                                       |
+| `special` | Pulses blue → purple → magenta                                       |
+| `skip`    | Cyan band runs up                                                    |
+| `stop`    | Fades red to a dim glow                                              |
 
-Two quick red flashes mean the press did not reach the server. The strip is dark during OTA.
+A gesture plays its slot once, then returns to the play loop while the show runs, or to idle.
+When the show ends (stop pressed or the song ends) the stop fade plays, then idle. Two quick red
+flashes mean the press did not reach the server. The strip is dark during OTA.
 
 ## Setup
 
