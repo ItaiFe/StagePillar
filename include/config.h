@@ -10,7 +10,7 @@
 #define FIRMWARE_VERSION "dev"
 #endif
 
-constexpr uint8_t BUTTON_PIN = 4;   // switch to GND, internal pull-up
+constexpr uint8_t BUTTON_PIN = 12;  // switch to GND, internal pull-up (GPIO 4 drives the LED strip)
 constexpr uint8_t LED_PIN = 2;      // onboard LED, active high
 constexpr const char* DEVICE_HOSTNAME = "stage-pillar";
 constexpr uint16_t HTTP_TIMEOUT_MS = 2000;
