@@ -205,17 +205,44 @@ void test_show_state_change_does_not_cut_a_preview() {
     TEST_ASSERT_TRUE(showing(Slot::Start, 2000, 2000));
 }
 
-static Plan claps;  // replaced plan for the reload test
-static Plan lookupWithCustomClaps(Slot s) { return s == Slot::Claps ? claps : defaultPlan(s); }
+static Plan claps;  // replaced plans for the reload tests
+static Plan start;
+static Plan customLookup(Slot s) {
+    if (s == Slot::Claps) return claps;
+    if (s == Slot::Start) return start;
+    return defaultPlan(s);
+}
 
-void test_reload_restarts_the_active_slot_with_its_new_plan() {
-    PillarPlayer p(lookupWithCustomClaps);
+void test_reload_restarts_the_base_loop_with_its_new_plan() {
+    PillarPlayer p(customLookup);
     claps = defaultPlan(Slot::Claps);
+    start = defaultPlan(Slot::Start);
+    p.trigger(Slot::Start, 1000);
+    start = previewPlan(true);
+    p.reload(1100);
+    p.render(1200, frame, N);
+    TEST_ASSERT_TRUE(showingPlan(start, 1100, 1200));
+}
+
+void test_reload_ends_a_one_shot_whose_file_changed() {
+    PillarPlayer p(customLookup);
+    claps = defaultPlan(Slot::Claps);
+    start = defaultPlan(Slot::Start);
     p.trigger(Slot::Claps, 1000);
     claps = previewPlan(false);
     p.reload(1100);
     p.render(1200, frame, N);
-    TEST_ASSERT_TRUE(showingPlan(claps, 1100, 1200));
+    TEST_ASSERT_TRUE(showing(Slot::Idle, 1100, 1200));
+}
+
+void test_looping_preview_stops_itself_after_60s() {
+    PillarPlayer p;
+    Plan preview = previewPlan(true);
+    p.playPreview(preview, 1000);
+    p.render(60999, frame, N);
+    TEST_ASSERT_TRUE(showingPlan(preview, 1000, 60999));
+    p.render(61000, frame, N);
+    TEST_ASSERT_TRUE(showing(Slot::Idle, 61000, 61000));
 }
 
 int main() {
@@ -235,6 +262,8 @@ int main() {
     RUN_TEST(test_looping_preview_runs_until_ended);
     RUN_TEST(test_gesture_ends_a_preview);
     RUN_TEST(test_show_state_change_does_not_cut_a_preview);
-    RUN_TEST(test_reload_restarts_the_active_slot_with_its_new_plan);
+    RUN_TEST(test_reload_restarts_the_base_loop_with_its_new_plan);
+    RUN_TEST(test_reload_ends_a_one_shot_whose_file_changed);
+    RUN_TEST(test_looping_preview_stops_itself_after_60s);
     return UNITY_END();
 }

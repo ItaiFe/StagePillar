@@ -47,11 +47,17 @@ the ESP side only.
   source (at most one 700-byte frame). Frame pixels fade from a snapshot of the strip
   taken when the step starts.
 - `lib/pillar/pillar_player.*`: playback rules (contract §2) plus preview handling.
-- `src/plan_store.*`: LittleFS. The show-state task downloads a full round of six
-  slots into `/plans/new` when `pillar_plans_version` changes (404 = use the default);
-  `loop()` swaps the round into `/plans` in one go and the player restarts its current
-  slot. A failed or mixed-version round is discarded and retried after 5 s. Previews are
-  downloaded to `/preview.new` and swapped to `/preview.bin` by `loop()`.
+- `src/plan_store.*`: LittleFS. The poll only records the server's plans version and
+  preview id; a separate download task fetches a full round of six slots into
+  `/plans/new` when the version changes. A slot that is missing (404) or not playable
+  uses its default; only a version change mid-round fails the round, retried with
+  backoff (5 s doubling to 5 min). The task also builds each plan's index, so `loop()`
+  only renames files and copies indexes (no flash reads, no gesture stalls), then the
+  player restarts its base loop (a one-shot in progress ends). Previews go to
+  `/preview.new` and are swapped to `/preview.bin` the same way; a preview also ends by
+  itself after 60 s.
+- After a local start or stop the button trusts its own action over the poll for 3 s
+  (`lib/pillar/show_latch.h`), so a stale poll cannot replay the stop fade.
 - The poll reports `?client=pillar&running_version=<n>` so the server can show pillar status.
 
 ## Hardware

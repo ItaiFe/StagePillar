@@ -75,8 +75,12 @@ PillarPlayer::PillarPlayer(Lookup lookup) : lookup_(lookup) {
     play(Slot::Idle, 0);
 }
 
+// The server expires preview ids after 60 s; end locally too in case polls stop.
+static const uint32_t kPreviewMaxMs = 60000;
+
 void PillarPlayer::play(Slot slot, uint32_t nowMs) {
     active_ = slot;
+    activeStartMs_ = nowMs;
     renderer_.start(slot == Slot::Preview ? preview_ : lookup_(slot), nowMs, nowMs);
 }
 
@@ -109,10 +113,11 @@ void PillarPlayer::endPreview(uint32_t nowMs) {
 }
 
 void PillarPlayer::reload(uint32_t nowMs) {
-    if (active_ != Slot::Preview) play(active_, nowMs);
+    if (active_ != Slot::Preview) play(base(), nowMs);
 }
 
 void PillarPlayer::render(uint32_t nowMs, Rgb* frame, uint16_t count) {
+    if (active_ == Slot::Preview && nowMs - activeStartMs_ >= kPreviewMaxMs) play(base(), nowMs);
     if (renderer_.render(nowMs, frame, count)) return;
     play(base(), nowMs);
     renderer_.render(nowMs, frame, count);

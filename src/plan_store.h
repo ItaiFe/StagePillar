@@ -1,11 +1,11 @@
 #pragma once
-#include <IPAddress.h>
 #include <stdint.h>
 #include "pillar_player.h"
 
 // Uploaded LED plans on LittleFS, per the StageController pillar LED contract.
-// Downloads run on the show-state task into staging files; loop() swaps them in,
-// so the renderer never reads a file that is being written.
+// A background task downloads and validates plans into staging files; loop() only
+// renames them into place and takes over the already-built indexes, so it never
+// blocks on flash reads or reads a file that is being written.
 
 void planStoreBegin();
 
@@ -19,8 +19,8 @@ bool planStoreTakePreview(Plan& out);
 // The server ended the preview.
 bool planStoreTakePreviewEnd();
 
-// --- show-state task side ---
+// --- show-state poll side ---
 // Version of the plans in use (0 = code defaults), reported to the server.
 uint32_t planStoreVersion();
-// Brings stored plans to `version` and handles the preview id; call after each poll.
-void planStoreSync(IPAddress server, uint32_t version, uint32_t previewId);
+// What the server currently offers; the download task catches up in the background.
+void planStoreSetTarget(uint32_t version, uint32_t previewId);

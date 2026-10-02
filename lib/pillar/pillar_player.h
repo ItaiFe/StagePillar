@@ -32,7 +32,8 @@ public:
     void setShowRunning(bool running, uint32_t nowMs);
     void playPreview(Plan plan, uint32_t nowMs);
     void endPreview(uint32_t nowMs);
-    // Plans changed on disk: restart what is showing from its new plan.
+    // Plans changed on disk: restart the base loop from its new plan. A one-shot ends,
+    // since its file may have been replaced under it.
     void reload(uint32_t nowMs);
     void render(uint32_t nowMs, Rgb* frame, uint16_t count);
 
@@ -43,6 +44,7 @@ private:
     Lookup lookup_;
     bool running_ = false;
     Slot active_ = Slot::Idle;
+    uint32_t activeStartMs_ = 0;
     Plan preview_{nullptr, nullptr};
     SequenceRenderer renderer_;
 };

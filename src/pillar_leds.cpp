@@ -8,7 +8,8 @@ static const uint16_t kLeds = 100;
 static const uint32_t kFrameMs = 20;
 
 static CRGB leds[kLeds];
-static Rgb frame[kLeds];
+static Rgb frame[kLeds];  // what the plans drew; frame steps snapshot this
+static Rgb out[kLeds];    // frame plus the fail overlay
 static uint32_t lastFrameMs = 0;
 
 // Touched only from loop().
@@ -62,8 +63,9 @@ void pillarLedsUpdate(uint32_t nowMs, bool otaActive, bool showRunning) {
 
     player.setShowRunning(showRunning, nowMs);
     player.render(nowMs, frame, kLeds);
-    if (failActive && !overlayFail(nowMs - failStartMs, frame, kLeds)) failActive = false;
+    for (uint16_t i = 0; i < kLeds; i++) out[i] = frame[i];
+    if (failActive && !overlayFail(nowMs - failStartMs, out, kLeds)) failActive = false;
 
-    for (uint16_t i = 0; i < kLeds; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
+    for (uint16_t i = 0; i < kLeds; i++) leds[i] = CRGB(out[i].r, out[i].g, out[i].b);
     FastLED.show();
 }

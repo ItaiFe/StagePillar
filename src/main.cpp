@@ -36,6 +36,7 @@ void loop() {
         } else {
             Serial.printf("Gesture -> %s\n", actionFor(gesture));
             if (gesture == Gesture::Single) showAssumePlaying(now);
+            if (gesture == Gesture::Long) showAssumeStopped(now);
             pillarLedsPlay(gesture, now);
             if (!senderEnqueue(gesture)) Serial.println("Drop: queue full");
         }

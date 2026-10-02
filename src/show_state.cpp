@@ -5,15 +5,13 @@
 #include "net.h"
 #include "plan_store.h"
 #include "show_gate.h"
+#include "show_latch.h"
 
-static const uint32_t kAssumeMs = 3000;
+static ShowLatch latch;
+static volatile bool lastReported = false;
 
-static volatile bool playing = false;
-static volatile bool assumed = false;
-static volatile uint32_t assumedAtMs = 0;
-
-// Polls the player state, reporting which plans version the pillar runs, and syncs
-// plans and previews from what it says. Returns whether the show is running.
+// Polls the player state, reporting which plans version the pillar runs, and tells the
+// plan store what the server offers. Returns whether the show is running.
 static bool pollState() {
     if (!netConnected()) return false;
     IPAddress server = netServerIp();
@@ -31,7 +29,7 @@ static bool pollState() {
     uint32_t version = 0, previewId = 0;
     if (parseUintField(body.c_str(), "pillar_plans_version", version)) {
         parseUintField(body.c_str(), "pillar_preview_id", previewId);
-        planStoreSync(server, version, previewId);
+        planStoreSetTarget(version, previewId);
     }
     return parseShowRunning(body.c_str());
 }
@@ -39,8 +37,9 @@ static bool pollState() {
 static void pollTask(void*) {
     for (;;) {
         bool now = pollState();
-        if (now != playing) Serial.printf("Show: %s\n", now ? "running" : "idle");
-        playing = now;
+        if (now != lastReported) Serial.printf("Show: %s\n", now ? "running" : "idle");
+        lastReported = now;
+        latch.report(now);
         vTaskDelay(pdMS_TO_TICKS(SHOW_POLL_MS));
     }
 }
@@ -50,10 +49,13 @@ void showStateBegin() {
 }
 
 bool showPlaying(uint32_t nowMs) {
-    return playing || (assumed && nowMs - assumedAtMs < kAssumeMs);
+    return latch.running(nowMs);
 }
 
 void showAssumePlaying(uint32_t nowMs) {
-    assumedAtMs = nowMs;
-    assumed = true;
+    latch.assumeStarted(nowMs);
+}
+
+void showAssumeStopped(uint32_t nowMs) {
+    latch.assumeStopped(nowMs);
 }
