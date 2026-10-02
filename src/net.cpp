@@ -4,7 +4,9 @@
 #include "config.h"
 
 // mDNS itself is started by ArduinoOTA.begin() (see ota.cpp); starting it twice fails.
-static IPAddress cachedIp;  // 0.0.0.0 = not resolved yet
+// Shared by the sender and show-state tasks.
+static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+static uint32_t cachedIp = 0;  // 0 = not resolved yet
 
 void netBegin() {
     WiFi.setHostname(DEVICE_HOSTNAME);
@@ -19,7 +21,10 @@ bool netConnected() {
 }
 
 IPAddress netServerIp() {
-    if (uint32_t(cachedIp) != 0) return cachedIp;
+    portENTER_CRITICAL(&mux);
+    uint32_t cached = cachedIp;
+    portEXIT_CRITICAL(&mux);
+    if (cached != 0) return IPAddress(cached);
 
     IPAddress ip = MDNS.queryHost(SERVER_MDNS_NAME, MDNS_TIMEOUT_MS);
     if (uint32_t(ip) != 0) {
@@ -28,10 +33,14 @@ IPAddress netServerIp() {
         ip.fromString(SERVER_FALLBACK_IP);
         Serial.printf("Server: mDNS lookup failed, using %s\n", SERVER_FALLBACK_IP);
     }
-    cachedIp = ip;
+    portENTER_CRITICAL(&mux);
+    cachedIp = uint32_t(ip);
+    portEXIT_CRITICAL(&mux);
     return ip;
 }
 
 void netForgetServerIp() {
-    cachedIp = IPAddress();
+    portENTER_CRITICAL(&mux);
+    cachedIp = 0;
+    portEXIT_CRITICAL(&mux);
 }

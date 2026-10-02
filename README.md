@@ -14,6 +14,10 @@ ESP32 firmware for the stage button. Press gestures send actions to StageControl
 
 A gesture fires 0.4 s after the last release; a long press fires while held.
 
+While no music is playing (idle, paused, or the Pi unreachable) only a single press (`start`) does
+anything; other gestures are ignored, with no request and no LED effect. The button polls
+`GET /api/player/state` every second.
+
 ## Wiring
 
 Button on **GPIO 12** (internal pull-up), reads HIGH while pressed. Status on the onboard LED (GPIO 2):

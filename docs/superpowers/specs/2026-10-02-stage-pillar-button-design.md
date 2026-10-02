@@ -25,6 +25,14 @@ context only (OTA setup, PlatformIO layout); no code is reused.
 Request: `POST http://<pi>:8000/api/buttons/press/<action>`, empty body.
 The server already implements this endpoint; no server changes are needed.
 
+## Idle gate (added 2026-10-02)
+
+The button polls `GET /api/player/state` every 1 s in a background task. While
+`is_playing` is false (idle, paused, unknown, or Pi unreachable), only a single
+press (`start`) is acted on; every other gesture is ignored: no POST and no LED
+effect. After a `start` the show is treated as playing for 3 s so a quick
+follow-up gesture is not blocked while the next poll catches up.
+
 ## Hardware
 
 - Button on **GPIO 12**, `INPUT_PULLUP`. Pressed = HIGH (matches the existing board wiring).

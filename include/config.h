@@ -19,3 +19,4 @@ constexpr const char* DEVICE_HOSTNAME = "stage-pillar";
 constexpr uint16_t HTTP_TIMEOUT_MS = 2000;
 constexpr uint32_t MDNS_TIMEOUT_MS = 1500;
 constexpr uint8_t GESTURE_QUEUE_LEN = 4;
+constexpr uint32_t SHOW_POLL_MS = 1000;
