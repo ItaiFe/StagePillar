@@ -7,16 +7,16 @@ inline bool gestureAllowed(Gesture gesture, bool showPlaying) {
     return showPlaying || gesture == Gesture::Single;
 }
 
-// Reads "is_playing" from the body of GET /api/player/state. Anything unexpected
-// counts as not playing.
-inline bool parseIsPlaying(const char* body) {
+// Reads GET /api/player/state: the show runs while a song is loaded (playing or
+// paused), i.e. "current_song" is not null. Anything unexpected counts as not running.
+inline bool parseShowRunning(const char* body) {
     if (!body) return false;
-    const char* key = strstr(body, "\"is_playing\"");
+    const char* key = strstr(body, "\"current_song\"");
     if (!key) return false;
-    const char* p = key + strlen("\"is_playing\"");
+    const char* p = key + strlen("\"current_song\"");
     while (*p == ' ') p++;
     if (*p != ':') return false;
     p++;
     while (*p == ' ') p++;
-    return strncmp(p, "true", 4) == 0;
+    return *p != '\0' && strncmp(p, "null", 4) != 0;
 }

@@ -11,7 +11,7 @@ static volatile bool playing = false;
 static volatile bool assumed = false;
 static volatile uint32_t assumedAtMs = 0;
 
-static bool fetchIsPlaying() {
+static bool fetchShowRunning() {
     if (!netConnected()) return false;
     String url = "http://" + netServerIp().toString() + ":" + String(SERVER_PORT) + "/api/player/state";
     HTTPClient http;
@@ -20,15 +20,15 @@ static bool fetchIsPlaying() {
     if (!http.begin(url)) return false;
     bool result = false;
     int code = http.GET();
-    if (code == 200) result = parseIsPlaying(http.getString().c_str());
+    if (code == 200) result = parseShowRunning(http.getString().c_str());
     http.end();
     return result;
 }
 
 static void pollTask(void*) {
     for (;;) {
-        bool now = fetchIsPlaying();
-        if (now != playing) Serial.printf("Show: %s\n", now ? "playing" : "idle");
+        bool now = fetchShowRunning();
+        if (now != playing) Serial.printf("Show: %s\n", now ? "running" : "idle");
         playing = now;
         vTaskDelay(pdMS_TO_TICKS(SHOW_POLL_MS));
     }
