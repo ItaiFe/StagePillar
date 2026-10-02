@@ -4,6 +4,7 @@
 #include "gesture.h"
 #include "net.h"
 #include "ota.h"
+#include "sender.h"
 #include "status_led.h"
 
 static GestureDetector detector;
@@ -14,6 +15,7 @@ void setup() {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     statusLedBegin();
     netBegin();
+    senderBegin();
 }
 
 void loop() {
@@ -23,6 +25,7 @@ void loop() {
     Gesture gesture = detector.update(digitalRead(BUTTON_PIN) == LOW, now);
     if (gesture != Gesture::None) {
         Serial.printf("Gesture -> %s\n", actionFor(gesture));
+        if (!senderEnqueue(gesture)) Serial.println("Drop: queue full");
     }
 
     otaLoop(wifi);
