@@ -10,6 +10,7 @@ void test_action_mapping() {
     TEST_ASSERT_EQUAL_STRING("claps", actionFor(Gesture::Double));
     TEST_ASSERT_EQUAL_STRING("special", actionFor(Gesture::Triple));
     TEST_ASSERT_EQUAL_STRING("skip", actionFor(Gesture::Quad));
+    TEST_ASSERT_EQUAL_STRING("special", actionFor(Gesture::Many));
     TEST_ASSERT_EQUAL_STRING("stop", actionFor(Gesture::Long));
     TEST_ASSERT_NULL(actionFor(Gesture::None));
 }

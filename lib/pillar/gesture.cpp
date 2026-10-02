@@ -1,6 +1,6 @@
 #include "gesture.h"
 
-// Counts above 4 only need to be recognised as "too many", so stop counting here.
+// Counts above 4 all map to Many, so stop counting here.
 static const uint8_t kMaxCount = 5;
 
 static Gesture gestureForCount(uint8_t count) {
@@ -9,7 +9,7 @@ static Gesture gestureForCount(uint8_t count) {
         case 2: return Gesture::Double;
         case 3: return Gesture::Triple;
         case 4: return Gesture::Quad;
-        default: return Gesture::None;
+        default: return count >= kMaxCount ? Gesture::Many : Gesture::None;
     }
 }
 

@@ -1,7 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-enum class Gesture : uint8_t { None, Single, Double, Triple, Quad, Long };
+// Many = 5 or more presses.
+enum class Gesture : uint8_t { None, Single, Double, Triple, Quad, Many, Long };
 
 struct GestureTiming {
     uint32_t debounceMs = 30;

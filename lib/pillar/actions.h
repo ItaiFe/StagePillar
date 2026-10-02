@@ -9,6 +9,7 @@ inline const char* actionFor(Gesture g) {
         case Gesture::Double: return "claps";
         case Gesture::Triple: return "special";
         case Gesture::Quad:   return "skip";
+        case Gesture::Many:   return "special";
         case Gesture::Long:   return "stop";
         default:              return nullptr;
     }

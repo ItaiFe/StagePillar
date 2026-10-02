@@ -43,17 +43,15 @@ void test_two_taps_is_double() { Sim s; s.taps(2); assertOnly(s, Gesture::Double
 void test_three_taps_is_triple() { Sim s; s.taps(3); assertOnly(s, Gesture::Triple); }
 void test_four_taps_is_quad() { Sim s; s.taps(4); assertOnly(s, Gesture::Quad); }
 
-void test_five_taps_is_ignored() {
-    Sim s;
-    s.taps(5);
-    TEST_ASSERT_EQUAL_UINT32(0, s.out.size());
-}
+void test_five_taps_is_many() { Sim s; s.taps(5); assertOnly(s, Gesture::Many); }
+void test_eight_taps_is_many() { Sim s; s.taps(8); assertOnly(s, Gesture::Many); }
 
-void test_detector_recovers_after_five_taps() {
+void test_detector_recovers_after_many_taps() {
     Sim s;
-    s.taps(5);
+    s.taps(8);
     s.taps(1);
-    assertOnly(s, Gesture::Single);
+    TEST_ASSERT_EQUAL_UINT32(2, s.out.size());
+    TEST_ASSERT_EQUAL_INT((int)Gesture::Single, (int)s.out[1].first);
 }
 
 void test_bounce_shorter_than_debounce_is_ignored() {
@@ -155,8 +153,9 @@ int main() {
     RUN_TEST(test_two_taps_is_double);
     RUN_TEST(test_three_taps_is_triple);
     RUN_TEST(test_four_taps_is_quad);
-    RUN_TEST(test_five_taps_is_ignored);
-    RUN_TEST(test_detector_recovers_after_five_taps);
+    RUN_TEST(test_five_taps_is_many);
+    RUN_TEST(test_eight_taps_is_many);
+    RUN_TEST(test_detector_recovers_after_many_taps);
     RUN_TEST(test_bounce_shorter_than_debounce_is_ignored);
     RUN_TEST(test_bounce_inside_a_press_counts_once);
     RUN_TEST(test_gap_ends_gesture_exactly_400ms_after_release);

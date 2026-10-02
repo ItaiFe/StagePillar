@@ -9,9 +9,10 @@ ESP32 firmware for the stage button. Press gestures send actions to StageControl
 | 2 presses           | `claps`   |
 | 3 presses           | `special` |
 | 4 presses           | `skip`    |
+| 5+ presses          | `special` |
 | Long press (1.5 s)  | `stop`    |
 
-5+ presses are ignored. A gesture fires 0.4 s after the last release; a long press fires while held.
+A gesture fires 0.4 s after the last release; a long press fires while held.
 
 ## Wiring
 

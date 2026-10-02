@@ -20,7 +20,7 @@ context only (OTA setup, PlatformIO layout); no code is reused.
 | 3 presses           | `special` | Run "special" sequence                      |
 | 4 presses           | `skip`    | Skip to next song                           |
 | Long press (≥1.5 s) | `stop`    | Stop music, turn all devices off            |
-| 5+ presses          | none      | Ignored (treated as a fumble)               |
+| 5+ presses          | `special` | Same as 3 presses                           |
 
 Request: `POST http://<pi>:8000/api/buttons/press/<action>`, empty body.
 The server already implements this endpoint; no server changes are needed.
@@ -44,7 +44,7 @@ Rules:
 - When a hold reaches 1500 ms, `Long` is emitted at once. Any taps earlier in
   the same gesture are discarded. The release that follows emits nothing.
 - After the last release, if 400 ms pass with no new press, emit the count:
-  1→`Single`, 2→`Double`, 3→`Triple`, 4→`Quad`; ≥5 → nothing.
+  1→`Single`, 2→`Double`, 3→`Triple`, 4→`Quad`; ≥5→`Many` (sends `special`).
 - Known cost: a single press fires about 400 ms after release.
 
 ## Architecture
@@ -115,7 +115,7 @@ code, latency).
 Native unit tests for `GestureDetector`, driven by synthetic `(level, time)` sequences:
 
 - 1, 2, 3, 4 taps → correct gesture.
-- 5 taps → nothing.
+- 5 and 8 taps → `Many`.
 - Bounce shorter than 30 ms → not counted.
 - Long press → `Long` at 1500 ms while held; the release emits nothing.
 - Taps followed by a long press → only `Long`.
