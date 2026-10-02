@@ -2,6 +2,7 @@
 #include <FastLED.h>
 #include "config.h"
 #include "pillar_player.h"
+#include "plan_store.h"
 
 static const uint16_t kLeds = 100;
 static const uint32_t kFrameMs = 20;
@@ -11,7 +12,7 @@ static Rgb frame[kLeds];
 static uint32_t lastFrameMs = 0;
 
 // Touched only from loop().
-static PillarPlayer player;
+static PillarPlayer player(planStoreLookup);
 static bool failActive = false;
 static uint32_t failStartMs = 0;
 
@@ -23,6 +24,7 @@ void pillarLedsBegin() {
     FastLED.addLeds<WS2812B, PILLAR_LED_PIN, GRB>(leds, kLeds);
     FastLED.setBrightness(PILLAR_BRIGHTNESS);
     FastLED.clear(true);
+    player.reload(millis());  // plans were loaded from flash after the player was built
 }
 
 void pillarLedsPlay(Gesture gesture, uint32_t nowMs) {
@@ -52,6 +54,11 @@ void pillarLedsUpdate(uint32_t nowMs, bool otaActive, bool showRunning) {
         failActive = true;
         failStartMs = nowMs;
     }
+
+    if (planStoreApplyPending()) player.reload(nowMs);
+    Plan preview;
+    if (planStoreTakePreview(preview)) player.playPreview(preview, nowMs);
+    if (planStoreTakePreviewEnd()) player.endPreview(nowMs);
 
     player.setShowRunning(showRunning, nowMs);
     player.render(nowMs, frame, kLeds);

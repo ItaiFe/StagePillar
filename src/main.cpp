@@ -5,6 +5,7 @@
 #include "net.h"
 #include "ota.h"
 #include "pillar_leds.h"
+#include "plan_store.h"
 #include "sender.h"
 #include "show_gate.h"
 #include "show_state.h"
@@ -17,6 +18,7 @@ void setup() {
     Serial.printf("\nStagePillar button %s\n", FIRMWARE_VERSION);
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     statusLedBegin();
+    planStoreBegin();
     pillarLedsBegin();
     netBegin();
     senderBegin();

@@ -33,6 +33,27 @@ no song is loaded (`current_song` is null, unknown, or Pi unreachable; paused co
 effect. After a `start` the show is treated as playing for 3 s so a quick
 follow-up gesture is not blocked while the next poll catches up.
 
+## LED plans (added 2026-10-02)
+
+The format, slots, playback rules, defaults and HTTP endpoints are defined in the
+shared contract `StageController/docs/pillar-led-contract.md`; this section covers
+the ESP side only.
+
+- `lib/pillar/led_catalogue.*`: the effect maths (contract §8).
+- `lib/pillar/plp.*`: PLP1 reader with CRC check, plus an encoder for effect-only plans.
+  Code defaults are encoded as PLP1 at startup, so defaults, uploads and previews share
+  one reader. The golden file from StageController's compiler is a native test fixture.
+- `lib/pillar/sequence.*`: plays one plan. Only the current step is read from its
+  source (at most one 700-byte frame). Frame pixels fade from a snapshot of the strip
+  taken when the step starts.
+- `lib/pillar/pillar_player.*`: playback rules (contract §2) plus preview handling.
+- `src/plan_store.*`: LittleFS. The show-state task downloads a full round of six
+  slots into `/plans/new` when `pillar_plans_version` changes (404 = use the default);
+  `loop()` swaps the round into `/plans` in one go and the player restarts its current
+  slot. A failed or mixed-version round is discarded and retried after 5 s. Previews are
+  downloaded to `/preview.new` and swapped to `/preview.bin` by `loop()`.
+- The poll reports `?client=pillar&running_version=<n>` so the server can show pillar status.
+
 ## Hardware
 
 - Button on **GPIO 12**, `INPUT_PULLUP`. Pressed = HIGH (matches the existing board wiring).

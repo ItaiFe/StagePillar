@@ -37,6 +37,11 @@ one blink = sent, three fast blinks = failed, slow blink = no WiFi.
 | `skip`    | Cyan band runs up                                                    |
 | `stop`    | Fades red to a dim glow                                              |
 
+These are the code defaults. StageController can upload a plan per slot (effects and per-pixel
+frames, see `StageController/docs/pillar-led-contract.md`); the pillar stores them on LittleFS,
+fetches new ones when the server's plans version changes, and can play an unsaved draft
+("Play on pillar") without storing it.
+
 A gesture plays its slot once, then returns to the play loop while the show runs, or to idle.
 When the show ends (stop pressed or the song ends) the stop fade plays, then idle. Two quick red
 flashes mean the press did not reach the server. The strip is dark during OTA.
