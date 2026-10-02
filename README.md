@@ -16,7 +16,7 @@ A gesture fires 0.4 s after the last release; a long press fires while held.
 
 ## Wiring
 
-Momentary switch between **GPIO 12** and **GND** (internal pull-up). Status on the onboard LED (GPIO 2):
+Button on **GPIO 12** (internal pull-up), reads HIGH while pressed. Status on the onboard LED (GPIO 2):
 one blink = sent, three fast blinks = failed, slow blink = no WiFi.
 
 ## Setup

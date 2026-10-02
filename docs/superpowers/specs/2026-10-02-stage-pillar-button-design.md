@@ -27,7 +27,7 @@ The server already implements this endpoint; no server changes are needed.
 
 ## Hardware
 
-- Momentary switch between **GPIO 12** and **GND**, `INPUT_PULLUP`. Pressed = LOW.
+- Button on **GPIO 12**, `INPUT_PULLUP`. Pressed = HIGH (matches the existing board wiring).
 - Status feedback on the onboard LED, **GPIO 2**.
 
 ## Gesture timing

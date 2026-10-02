@@ -22,7 +22,7 @@ void loop() {
     uint32_t now = millis();
     bool wifi = netConnected();
 
-    Gesture gesture = detector.update(digitalRead(BUTTON_PIN) == LOW, now);
+    Gesture gesture = detector.update(digitalRead(BUTTON_PIN) == BUTTON_PRESSED_LEVEL, now);
     if (gesture != Gesture::None) {
         Serial.printf("Gesture -> %s\n", actionFor(gesture));
         if (!senderEnqueue(gesture)) Serial.println("Drop: queue full");
